@@ -3,14 +3,14 @@ from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QApplication, QTableView
 
 def calculate_color(val, row: int, column: str,
-                    mask):
+                    mask, ok_color, err_color):
     if column == 'ErrCnt':
         if val > 0:
-            return QtGui.QColor("#DD571C")
+            return QtGui.QBrush(err_color)
     if mask[row]:
-        return QtGui.QBrush(QtCore.Qt.GlobalColor.white)
+        return QtGui.QBrush(ok_color)  # QtCore.Qt.GlobalColor.white
     else:
-        return QtGui.QColor("#DD571C")
+        return QtGui.QBrush(err_color)
 
 class DataFrameModel(QtCore.QAbstractTableModel):
     DtypeRole: int = QtCore.Qt.ItemDataRole.UserRole + 1000
@@ -20,6 +20,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
         super().__init__()
         self._df: pd.DataFrame = df
         self.values_mask: pd.Series[bool] = mask
+        self.palette = 'light'
 
     def setDataFrame(self, dataframe: pd.DataFrame, mask: pd.Series) -> None:
         self.beginResetModel()
@@ -62,7 +63,14 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 return str(val)
         elif role == QtCore.Qt.ItemDataRole.BackgroundRole:
             r = index.row()
-            color = calculate_color(val, r, col, self.values_mask)
+            if self.palette == 'dark':
+                ok_color = QtCore.Qt.GlobalColor.black
+                err_color = QtCore.Qt.GlobalColor.darkRed
+            else:
+                ok_color = QtCore.Qt.GlobalColor.white
+                err_color = QtGui.QColor("#DD571C")
+            color: QtGui.QBrush = calculate_color(val, r, col, self.values_mask,
+                                                  ok_color, err_color)
             return color
         elif role == DataFrameModel.ValueRole:
             return val
