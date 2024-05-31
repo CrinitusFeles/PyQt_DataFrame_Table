@@ -40,7 +40,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 try:
                     header = str(self._df.index[section])
                 except IndexError as err:
-                    logger.error(err)
+                    logger.error(f'{err}\n{self._df}\n{section=}')
                 return header
         return QtCore.QVariant()
 
