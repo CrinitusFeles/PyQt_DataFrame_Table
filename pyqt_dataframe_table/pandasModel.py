@@ -1,6 +1,7 @@
 import pandas as pd
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QApplication, QTableView
+from loguru import logger
 
 def calculate_color(val, row: int, column: str,
                     mask, ok_color, err_color):
@@ -35,7 +36,12 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             if orientation == QtCore.Qt.Orientation.Horizontal:
                 return self._df.columns[section]
             else:
-                return str(self._df.index[section])
+                header: str = ''
+                try:
+                    header = str(self._df.index[section])
+                except IndexError as err:
+                    logger.error(err)
+                return header
         return QtCore.QVariant()
 
     def rowCount(self, parent=QtCore.QModelIndex()) -> int:
