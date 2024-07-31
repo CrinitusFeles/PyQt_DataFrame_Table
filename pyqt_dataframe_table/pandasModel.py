@@ -17,16 +17,19 @@ class DataFrameModel(QtCore.QAbstractTableModel):
     DtypeRole: int = QtCore.Qt.ItemDataRole.UserRole + 1000
     ValueRole: int = QtCore.Qt.ItemDataRole.UserRole + 1001
 
-    def __init__(self, df=pd.DataFrame(), mask: pd.Series=pd.Series()) -> None:
+    def __init__(self, df=pd.DataFrame(),
+                 mask: pd.Series | None = None) -> None:
         super().__init__()
         self._df: pd.DataFrame = df
-        self.values_mask: pd.Series[bool] = mask
+        self.values_mask: pd.Series[bool] | None = mask
         self.palette = 'light'
 
-    def setDataFrame(self, dataframe: pd.DataFrame, mask: pd.Series) -> None:
+    def setDataFrame(self, dataframe: pd.DataFrame,
+                     mask: pd.Series | None = None) -> None:
         self.beginResetModel()
         self._df = dataframe.copy()
-        self.values_mask = mask.copy()
+        if mask:
+            self.values_mask = mask.copy()
         self.endResetModel()
 
     @QtCore.pyqtSlot(int, QtCore.Qt.Orientation)
@@ -55,7 +58,8 @@ class DataFrameModel(QtCore.QAbstractTableModel):
         return self._df.columns.size
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
-        if not index.isValid() or not (0 <= index.row() < self.rowCount() and 0 <= index.column() < self.columnCount()):
+        if not index.isValid() or not (0 <= index.row() < self.rowCount()
+                                       and 0 <= index.column() < self.columnCount()):
             return QtCore.QVariant()
         row = self._df.index[index.row()]
         col = self._df.columns[index.column()]
@@ -67,7 +71,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 return str(f'{val:.2f}')
             else:
                 return str(val)
-        elif role == QtCore.Qt.ItemDataRole.BackgroundRole:
+        elif role == QtCore.Qt.ItemDataRole.BackgroundRole and self.values_mask:
             r = index.row()
             if self.palette == 'dark':
                 ok_color = QtCore.Qt.GlobalColor.black
