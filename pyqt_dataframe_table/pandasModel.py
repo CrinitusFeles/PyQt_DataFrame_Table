@@ -28,7 +28,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                      mask: pd.Series | None = None) -> None:
         self.beginResetModel()
         self._df = dataframe.copy()
-        if mask:
+        if mask is not None:
             self.values_mask = mask.copy()
         self.endResetModel()
 
@@ -71,7 +71,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 return str(f'{val:.2f}')
             else:
                 return str(val)
-        elif role == QtCore.Qt.ItemDataRole.BackgroundRole and self.values_mask:
+        elif role == QtCore.Qt.ItemDataRole.BackgroundRole and self.values_mask is not None:
             r = index.row()
             if self.palette == 'dark':
                 ok_color = QtCore.Qt.GlobalColor.black
