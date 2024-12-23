@@ -1,15 +1,16 @@
+from typing import Callable
 import pandas as pd
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QApplication, QTableView
 from loguru import logger
 
 def calculate_color(val, row: int, column: str,
-                    mask, ok_color, err_color):
+                    mask, default_color, ok_color, err_color):
     if column == 'ErrCnt':
         if val > 0:
             return QtGui.QBrush(err_color)
     if mask[row]:
-        return QtGui.QBrush(ok_color)  # QtCore.Qt.GlobalColor.white
+        return QtGui.QBrush(default_color)  # QtCore.Qt.GlobalColor.white
     else:
         return QtGui.QBrush(err_color)
 
@@ -18,14 +19,21 @@ class DataFrameModel(QtCore.QAbstractTableModel):
     ValueRole: int = QtCore.Qt.ItemDataRole.UserRole + 1001
 
     def __init__(self, df=pd.DataFrame(),
-                 mask: pd.Series | None = None) -> None:
+                 mask: list[bool] | None = None) -> None:
         super().__init__()
         self._df: pd.DataFrame = df
-        self.values_mask: pd.Series[bool] | None = mask
+        self.values_mask: list[bool] | None = mask
         self.palette = 'light'
+        self.calculate_color: Callable = calculate_color
+        self.ok_color: dict = {'dark': QtGui.QColor("#188b0f"),
+                               'light': QtGui.QColor("#76ff5a")}
+        self.err_color: dict = {'dark': QtCore.Qt.GlobalColor.darkRed,
+                                'light': QtGui.QColor("#DD571C")}
+        self.default_color: dict = {'dark': QtCore.Qt.GlobalColor.black,
+                                    'light': QtCore.Qt.GlobalColor.white}
 
     def setDataFrame(self, dataframe: pd.DataFrame,
-                     mask: pd.Series | None = None) -> None:
+                     mask) -> None:
         self.beginResetModel()
         self._df = dataframe.copy()
         if mask is not None:
@@ -73,14 +81,11 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 return str(val)
         elif role == QtCore.Qt.ItemDataRole.BackgroundRole and self.values_mask is not None:
             r = index.row()
-            if self.palette == 'dark':
-                ok_color = QtCore.Qt.GlobalColor.black
-                err_color = QtCore.Qt.GlobalColor.darkRed
-            else:
-                ok_color = QtCore.Qt.GlobalColor.white
-                err_color = QtGui.QColor("#DD571C")
-            color: QtGui.QBrush = calculate_color(val, r, col, self.values_mask,
-                                                  ok_color, err_color)
+            color: QtGui.QBrush = self.calculate_color(val, r, col,
+                                                       self.values_mask,
+                                                       self.default_color[self.palette],
+                                                       self.ok_color[self.palette],
+                                                       self.err_color[self.palette])
             return color
         elif role == DataFrameModel.ValueRole:
             return val
@@ -104,7 +109,7 @@ if __name__ == '__main__':
                     'IsErr': [True, False, True],
                     'c': ['a', 'b', 'c']})
     df = df_raw.drop('IsErr', axis=1)
-    mask = df_raw['IsErr']
+    mask = df_raw['IsErr'].to_list()
     model = DataFrameModel(df, mask)
     app = QApplication([])
     view = QTableView()
