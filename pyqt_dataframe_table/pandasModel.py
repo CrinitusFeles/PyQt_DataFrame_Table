@@ -32,6 +32,10 @@ class DataFrameModel(QtCore.QAbstractTableModel):
         self.default_color: dict = {'dark': QtCore.Qt.GlobalColor.black,
                                     'light': QtCore.Qt.GlobalColor.white}
 
+    def update_column(self, column: int) -> None:
+        self.dataChanged.emit(self.index(0, column),
+                              self.index(self.rowCount() - 1, column))
+
     def setDataFrame(self, dataframe: pd.DataFrame,
                      mask) -> None:
         self.beginResetModel()
