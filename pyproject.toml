@@ -11,10 +11,10 @@ dependencies = [
 
 [project.optional-dependencies]
 pyside = [
-    "pyside6>=6.9.1",
+    "pyside6",
 ]
 pyqt = [
-    "pyqt6>=6.9.1",
+    "pyqt6",
 ]
 
 
