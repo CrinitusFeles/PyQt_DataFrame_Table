@@ -1,18 +1,20 @@
-[tool.poetry]
+[project]
 name = "pyqt-dataframe-table"
 version = "0.1.0"
 description = ""
-authors = ["CrinitusFeles <crinitusfeles@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+dependencies = [
+    "loguru>=0.7.3",
+    "pandas>=2.3.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pandas = "^2.2.2"
-pyqt6 = "^6.6.1"
-loguru = "^0.7.2"
+[project.optional-dependencies]
+pyside = [
+    "pyside6>=6.9.1",
+]
+pyqt = [
+    "pyqt6>=6.9.1",
+]
 
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

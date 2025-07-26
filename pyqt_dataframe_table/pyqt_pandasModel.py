@@ -1,8 +1,12 @@
 from typing import Callable
 import pandas as pd
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtWidgets import QApplication, QTableView
 from loguru import logger
+try:
+    from PyQt6 import QtCore, QtGui
+    from PyQt6.QtWidgets import QApplication, QTableView
+except ImportError as err:
+    logger.error('You have to install PyQt6')
+    raise err
 
 def calculate_color(val, row: int, column: str,
                     mask, default_color, ok_color, err_color):
@@ -97,7 +101,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             return dt
         return QtCore.QVariant()
 
-    def roleNames(self):
+    def roleNames(self):  # type: ignore
         roles = {
             QtCore.Qt.ItemDataRole.DisplayRole: b'display',
             DataFrameModel.DtypeRole: b'dtype',
