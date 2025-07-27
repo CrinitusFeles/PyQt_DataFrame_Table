@@ -52,7 +52,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
 
     @QtCore.Slot(int, QtCore.Qt.Orientation)
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
-                   role: int = QtCore.Qt.ItemDataRole.DisplayRole) -> str:
+                   role: int = QtCore.Qt.ItemDataRole.DisplayRole) -> str | None:
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if orientation == QtCore.Qt.Orientation.Horizontal:
                 return self._df.columns[section]
@@ -63,7 +63,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 except IndexError as err:
                     logger.error(f'{err}\n{self._df}\n{section=}')
                 return header
-        return ''
+        return None
 
     def rowCount(self, parent: MODEL_INDEX = QtCore.QModelIndex()) -> int:
         if parent.isValid():
@@ -78,7 +78,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
     def data(self, index: MODEL_INDEX, role: int = QtCore.Qt.ItemDataRole.DisplayRole):
         if not index.isValid() or not (0 <= index.row() < self.rowCount()
                                        and 0 <= index.column() < self.columnCount()):
-            return ''
+            return None
         row = self._df.index[index.row()]
         col = self._df.columns[index.column()]
         dt = self._df[col].dtype
@@ -101,7 +101,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             return val
         if role == DataFrameModel.DtypeRole:
             return dt
-        return ''
+        return None
 
     def roleNames(self):  # type: ignore
         roles = {
