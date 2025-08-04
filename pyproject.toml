@@ -5,7 +5,6 @@ description = ""
 license = "MIT"
 readme = "README.md"
 dependencies = [
-    "loguru>=0.7.3",
     "pandas>=2.3.1",
 ]
 

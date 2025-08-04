@@ -1,12 +1,8 @@
 from typing import Callable
 import pandas as pd
-from loguru import logger
-try:
-    from PyQt6 import QtCore, QtGui
-    from PyQt6.QtWidgets import QApplication, QTableView
-except ImportError as err:
-    logger.error('You have to install PyQt6')
-    raise err
+from pyqt_dataframe_table import (QtWidgets, QtGui, QtCore, QApplication,
+                                  QTableView, Slot)
+
 
 def calculate_color(val, row: int, column: str,
                     mask, default_color, ok_color, err_color):
@@ -17,6 +13,10 @@ def calculate_color(val, row: int, column: str,
         return QtGui.QBrush(default_color)  # QtCore.Qt.GlobalColor.white
     else:
         return QtGui.QBrush(err_color)
+
+
+MODEL_INDEX = QtCore.QModelIndex | QtCore.QPersistentModelIndex
+
 
 class DataFrameModel(QtCore.QAbstractTableModel):
     DtypeRole: int = QtCore.Qt.ItemDataRole.UserRole + 1000
@@ -48,7 +48,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             self.values_mask = mask.copy()
         self.endResetModel()
 
-    @QtCore.pyqtSlot(int, QtCore.Qt.Orientation)
+    Slot(int, QtCore.Qt.Orientation)
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
                    role: int = QtCore.Qt.ItemDataRole.DisplayRole):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
@@ -59,24 +59,25 @@ class DataFrameModel(QtCore.QAbstractTableModel):
                 try:
                     header = str(self._df.index[section])
                 except IndexError as err:
-                    logger.error(f'{err}\n{self._df}\n{section=}')
+                    print(f'{err}\n{self._df}\n{section=}')
+                    raise err
                 return header
-        return QtCore.QVariant()
+        return None
 
-    def rowCount(self, parent=QtCore.QModelIndex()) -> int:
+    def rowCount(self, parent: MODEL_INDEX = QtCore.QModelIndex()) -> int:
         if parent.isValid():
             return 0
         return len(self._df.index)
 
-    def columnCount(self, parent=QtCore.QModelIndex()) -> int:
+    def columnCount(self, parent: MODEL_INDEX = QtCore.QModelIndex()) -> int:
         if parent.isValid():
             return 0
         return self._df.columns.size
 
-    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role: int = QtCore.Qt.ItemDataRole.DisplayRole):
         if not index.isValid() or not (0 <= index.row() < self.rowCount()
                                        and 0 <= index.column() < self.columnCount()):
-            return QtCore.QVariant()
+            return None
         row = self._df.index[index.row()]
         col = self._df.columns[index.column()]
         dt = self._df[col].dtype
@@ -99,7 +100,7 @@ class DataFrameModel(QtCore.QAbstractTableModel):
             return val
         if role == DataFrameModel.DtypeRole:
             return dt
-        return QtCore.QVariant()
+        return None
 
     def roleNames(self):  # type: ignore
         roles = {
@@ -122,6 +123,15 @@ if __name__ == '__main__':
     app = QApplication([])
     view = QTableView()
     view.setModel(model)
+    header = view.horizontalHeader()
+    # header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+    # header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+    view.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)  # type: ignore
+    view.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)  # type: ignore
+    view.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)  # type: ignore
+    # view.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+    view.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+    view.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
     view.resize(800, 600)
     view.show()
     app.exec()
